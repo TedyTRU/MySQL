@@ -75,6 +75,8 @@ FROM peaks AS p, rivers AS r
 WHERE RIGHT(p.peak_name, 1) = LEFT(r.river_name, 1)
 ORDER BY mix;
 
+USE diablo;
+
 #12
 SELECT `name`, SUBSTRING(`start`, 1, 10) AS 'start' FROM games
 WHERE YEAR(`start`) IN (2011, 2012)
@@ -84,8 +86,44 @@ LIMIT 50;
 SELECT * FROM games;
 
 #13
+SELECT * FROM users;
 
+SELECT user_name, SUBSTRING(email, LOCATE('@', email) + 1) AS 'email_provider' 
+FROM users
+ORDER BY email_provider, user_name;
 
+#14
+SELECT user_name, ip_address FROM users
+WHERE ip_address LIKE '___.1%.%.___'
+ORDER BY user_name;
 
+#15
+SELECT * FROM games;
 
+SELECT `name` AS 'game',
+
+(CASE 
+WHEN SUBSTRING(`start`, 12, 2) BETWEEN 0 AND 11 THEN 'Morning'
+WHEN HOUR(`start`) BETWEEN 12 AND 17 THEN 'Afternoon'
+WHEN HOUR(`start`) BETWEEN 18 AND 24 THEN 'Evening'
+END) AS 'Part of the Day',
+
+(CASE
+WHEN duration BETWEEN 0 AND 3 THEN 'Extra Short'
+WHEN duration BETWEEN 4 AND 6 THEN 'Short'
+WHEN duration BETWEEN 7 AND 10 THEN 'Long'
+ELSE 'Extra Long'
+END) AS 'Duration'
+
+FROM games;
+
+USE orders;
+
+#16
+SELECT * FROM orders;
+
+SELECT `product_name`, `order_date`,
+ADDDATE(`order_date`, 3) AS 'pay_due',
+DATE_ADD(`order_date`, INTERVAL 1 MONTH) AS 'deliver_due'
+FROM orders;
 

@@ -1,4 +1,3 @@
-
 #1
 SELECT * FROM employees;
 SELECT * FROM addresses;
@@ -84,9 +83,9 @@ JOIN employees_projects AS ep
 ON e.employee_id = ep.employee_id
 JOIN projects AS p
 ON ep.project_id = p.project_id
-WHERE start_date > '2002-08-13'
-AND end_date IS NULL
-ORDER BY e.first_name, p.name
+WHERE DATE(p.start_date) > '2002-08-13' 
+AND p.end_date IS NULL
+ORDER BY e.first_name, p.name 
 LIMIT 5;
 
 SELECT * FROM projects 
@@ -138,22 +137,81 @@ ON e.department_id = d.department_id
 ORDER BY e.employee_id
 LIMIT 5; 
 
+#11
+SELECT AVG(salary) AS 'min_average_salary'
+FROM employees
+GROUP BY department_id
+ORDER BY `min_average_salary`
+LIMIT 1;
+
+SELECT AVG(salary) FROM employees
+GROUP BY department_id;
+
+SELECT MIN(avg) AS 'min_average_salary' FROM (
+	SELECT AVG(salary) AS 'avg' FROM employees
+    GROUP BY department_id
+) AS minSalary;
 
 
+USE geography;
+
+#12
+SELECT mc.country_code, m.mountain_range, p.peak_name, p.elevation
+FROM peaks AS p
+JOIN mountains AS m
+ON m.id = p.mountain_id
+JOIN mountains_countries AS mc
+ON m.id = mc.mountain_id
+WHERE p.elevation > 2835 AND mc.country_code = 'BG'
+ORDER BY p.elevation DESC;
+
+#13
+SELECT mc.country_code, COUNT(*) AS 'mountain_range'
+FROM mountains AS m
+JOIN mountains_countries AS mc
+ON m.id = mc.mountain_id
+WHERE mc.country_code IN ('BG', 'RU', 'US')
+GROUP BY mc.country_code
+ORDER BY `mountain_range` DESC;
+
+#14
+SELECT * FROM countries;
+
+SELECT c.country_name, r.river_name
+FROM countries AS c
+LEFT JOIN countries_rivers AS cr
+ON c.country_code = cr.country_code
+LEFT JOIN rivers AS r
+ON cr.river_id = r.id
+WHERE c.continent_code = 'AF'
+ORDER BY c.country_name
+LIMIT 5;
+
+#15
 
 
+#16
+SELECT COUNT(*) AS 'country_count' FROM countries AS c
+LEFT JOIN mountains_countries AS mc
+ON c.country_code = mc.country_code
+LEFT JOIN mountains AS m
+ON mc.mountain_id = m.id
+WHERE m.id IS NULL;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+#17
+SELECT c.country_name, 
+MAX(p.elevation) AS 'highest_peak_elevation', 
+MAX(r.length) AS 'longest_river_length'
+FROM countries AS c
+JOIN countries_rivers AS cr
+ON c.country_code = cr.country_code
+JOIN rivers AS r
+ON cr.river_id = r.id
+JOIN mountains_countries AS mc
+ON c.country_code = mc.country_code
+JOIN peaks AS p
+ON mc.mountain_id = p.mountain_id
+GROUP BY c.country_name
+ORDER BY highest_peak_elevation DESC, longest_river_length DESC, c.country_name
+LIMIT 5;
 

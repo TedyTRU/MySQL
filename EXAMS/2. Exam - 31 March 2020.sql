@@ -48,9 +48,6 @@ CREATE TABLE users_photos (
 	user_id INT NOT NULL,
     photo_id INT NOT NULL,
     
-    CONSTRAINT pk_users_photos
-    PRIMARY KEY (user_id, photo_id),
-    
     CONSTRAINT fk_users_photos_users
     FOREIGN KEY (user_id)
     REFERENCES users (id),
@@ -191,14 +188,27 @@ SELECT udf_users_photos_count('ssantryd') AS photosCount;
 #11
 
 SELECT * FROM addresses;
+SELECT * FROM users;
 
-SELECT * FROM users AS u
+DELIMITER $$
+CREATE PROCEDURE udp_modify_user (p_address VARCHAR(30), p_town VARCHAR(30))
+BEGIN
+
+UPDATE users AS u
+JOIN addresses AS a
+ON a.user_id = u.id
+SET age = age + 10
+WHERE a.address = p_address
+AND a.town = p_town;
+
+END $$
+
+DELIMITER ;
+CALL udp_modify_user ('97 Valley Edge Parkway', 'DivinГіpolis');
+
+SELECT u.username, u.email, u.gender, u.age, u.job_title FROM users AS u
 JOIN addresses AS a
 ON a.user_id = u.id
 WHERE a.address = '97 Valley Edge Parkway'
-AND a.town = 'Divinópolis';
-
-
-
-
+AND a.town = 'DivinГіpolis';
 

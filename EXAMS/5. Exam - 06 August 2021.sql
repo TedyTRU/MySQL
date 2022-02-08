@@ -2,6 +2,9 @@
 CREATE SCHEMA game_dev_branch;
 USE game_dev_branch;
 
+-- Section 1:
+#1
+
 CREATE TABLE employees (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     first_name VARCHAR(30) NOT NULL,
@@ -78,19 +81,153 @@ CREATE TABLE games_categories (
     REFERENCES categories (id)
 );
 
+-- Section 2:
+#2
+SELECT * FROM games;
+SELECT * FROM teams;
 
+INSERT INTO games (`name`, rating, budget, team_id)
+SELECT REVERSE(LOWER(SUBSTRING(`name`, 2))), id, leader_id * 1000, id
+FROM teams 
+WHERE id BETWEEN 1 AND 9;
 
+#3
+SELECT * FROM teams;
+SELECT * FROM employees;
 
+UPDATE employees
+SET salary = salary + 1000
+WHERE age < 40
+AND salary <= 5000;
 
+#4
+SELECT * FROM games_categories;
+SELECT * FROM games AS g
+WHERE (SELECT COUNT(game_id) FROM games_categories
+WHERE game_id = g.id) = 0;
 
+#4
+DELETE FROM games AS g
+WHERE (SELECT COUNT(game_id) FROM games_categories
+WHERE game_id = g.id) = 0
+AND g.release_date IS NULL;
 
+-- Section 3:
+#5
+SELECT first_name, last_name, age, salary, happiness_level
+FROM employees
+ORDER BY salary, id;
 
+#6
+SELECT t.`name` AS 'team_name', a.`name` AS 'address_name', CHAR_LENGTH(a.`name`) AS 'count_of_characters'
+FROM teams AS t
+JOIN offices AS o ON t.office_id = o.id
+JOIN addresses AS a ON o.address_id = a.id
+WHERE o.website IS NOT NULL
+ORDER BY team_name, address_name;
 
+#7
+SELECT * FROM games;
+SELECT * FROM categories;
+SELECT * FROM games_categories;
 
+SELECT c.`name` AS 'name', COUNT(gc.game_id) AS 'games_count',
+ROUND(AVG(g.budget), 2) AS 'avg_budget', MAX(g.rating) AS 'max_rating'
+FROM games_categories AS gc
+JOIN games AS g ON gc.game_id = g.id
+JOIN categories AS c ON gc.category_id = c.id
+GROUP BY gc.category_id
+HAVING max_rating >= 9.5
+ORDER BY games_count DESC, c.`name`;
 
+#8
+SELECT * FROM games;
 
+SELECT g.`name`, g.release_date, CONCAT(SUBSTRING(g.`description`, 1, 10), '...') AS 'summary',
+(CASE 
+WHEN MONTH(g.release_date) IN (1, 2, 3) THEN 'Q1'
+WHEN MONTH(g.release_date) IN (4, 5, 6) THEN 'Q2'
+WHEN MONTH(g.release_date) IN (7, 8, 9) THEN 'Q3'
+ELSE 'Q4'
+END) AS 'quarter', t.`name` AS 'team_name'
+FROM games AS g
+JOIN teams AS t ON g.team_id = t.id
+WHERE YEAR(g.release_date) = 2022
+AND MONTH(g.release_date) % 2 = 0
+AND RIGHT(g.`name`, 1) = '2'
+ORDER BY quarter;
 
+#9
+SELECT * FROM games;
+SELECT * FROM categories;
+SELECT * FROM games_categories;
 
+SELECT g.`name` AS 'name',
+(CASE
+WHEN g.budget < 50000 THEN 'Normal budget'
+ELSE 'Insufficient budget'
+END) AS 'budget_level',
+t.`name` AS 'team_name', a.`name` AS 'address_name'
+FROM games AS g
+LEFT JOIN games_categories AS gc ON g.id = gc.game_id
+LEFT JOIN teams AS t ON g.team_id = t.id
+LEFT JOIN offices AS o ON t.office_id = o.id
+LEFT JOIN addresses AS a ON o.address_id = a.id
+WHERE gc.category_id IS NULL
+AND g.release_date IS NULL
+ORDER BY g.`name`;
 
+#10
 
+DELIMITER $$
+CREATE FUNCTION udf_game_info_by_name (game_name VARCHAR (20))
+RETURNS TEXT
+DETERMINISTIC
+BEGIN
 
+RETURN 
+(SELECT CONCAT('The ', g.`name`, ' is developed by a ', t.`name`, ' in an office with an address ', a.`name`) AS 'info'
+FROM games AS g
+JOIN teams AS t ON g.team_id = t.id
+JOIN offices AS o ON t.office_id = o.id
+JOIN addresses AS a ON o.address_id = a.id
+WHERE g.`name` = game_name);
+
+END $$
+
+DELIMITER ;
+SELECT udf_game_info_by_name ('Bitwolf') AS 'info';
+SELECT udf_game_info_by_name ('Fix San') AS 'info';
+SELECT udf_game_info_by_name ('Job') AS 'info';
+
+#11
+
+DELIMITER $$
+CREATE PROCEDURE udp_update_budget (min_game_rating FLOAT)
+BEGIN
+
+UPDATE games AS g
+
+SET g.budget = g.budget + 100000,
+g.release_date = DATE_ADD(g.release_date, INTERVAL 1 YEAR)
+
+WHERE (SELECT COUNT(category_id) FROM games_categories WHERE game_id = g.id) = 0
+AND g.rating > min_game_rating
+AND g.release_date IS NOT NULL
+;
+
+END $$
+
+DELIMITER ;
+CALL udp_update_budget (8);
+
+SELECT g.`name`, g.budget, g.release_date FROM games AS g
+WHERE (SELECT COUNT(category_id) FROM games_categories WHERE game_id = g.id ) = 0
+AND g.rating > 8
+AND g.release_date IS NOT NULL;
+
+SELECT * FROM games;
+SELECT * FROM categories;
+SELECT * FROM games_categories;
+SELECT * FROM games AS g
+WHERE (SELECT COUNT(category_id) FROM games_categories WHERE game_id = g.id ) = 0;

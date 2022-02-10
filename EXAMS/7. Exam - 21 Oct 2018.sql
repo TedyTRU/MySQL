@@ -70,11 +70,149 @@ CREATE TABLE travel_cards (
 -- Section 2:
 #2
 
+SELECT * FROM travel_cards;
+
+INSERT INTO travel_cards (card_number, job_during_journey, colonist_id, journey_id)
+SELECT 
+		IF(birth_date > '1980-01-01',
+        CONCAT(YEAR(birth_date), DAY(birth_date), lEFT(ucn, 4)),
+        CONCAT(YEAR(birth_date), MONTH(birth_date), RIGHT(ucn, 4))),
+        
+       (CASE 
+			WHEN id % 2 = 0 THEN 'Pilot'
+            WHEN id % 3 = 0 THEN 'Cook'
+            ELSE 'Engineer'
+            END),
+            
+            id,
+            
+            LEFT(ucn, 1)
+            
+FROM colonists WHERE id BETWEEN 96 AND 100;
+
+ #3
+UPDATE journeys 
+SET purpose =
+(CASE
+	WHEN id % 2 = 0 THEN 'Medical'
+	WHEN id % 3 = 0 THEN 'Technical'
+	WHEN id % 5 = 0 THEN 'Educational'
+	WHEN id % 7 = 0 THEN 'Military'
+    ELSE purpose
+END);
+
+SELECT * FROM journeys 
+WHERE id % 7 = 0 ;
+
+#4
+DELETE FROM colonists AS c
+WHERE (SELECT COUNT(*) FROM travel_cards WHERE colonist_id = c.id) = 0;
 
 
 
+-- Section 3:
+#4
+SELECT card_number, job_during_journey FROM travel_cards
+ORDER BY card_number;
 
+#5
+SELECT id, CONCAT_WS(' ', first_name, last_name) AS 'full_name', ucn
+FROM colonists
+ORDER BY first_name, last_name, id;
 
+#6
+SELECT id, journey_start, journey_end FROM journeys
+WHERE purpose = 'Military'
+ORDER BY journey_start;
 
+#7
+SELECT * FROM travel_cards;
+SELECT * FROM colonists;
+
+SELECT c.id, CONCAT_WS(' ', first_name, last_name) AS 'full_name' FROM colonists AS c
+JOIN travel_cards AS tc ON tc.colonist_id = c.id
+WHERE tc.job_during_journey = 'Pilot'
+ORDER BY c.id;
+
+#8
+SELECT COUNT(*) AS 'count' FROM journeys AS j
+LEFT JOIN travel_cards AS tc ON tc.journey_id = j.id
+WHERE j.purpose = 'Technical';
+
+#9
+SELECT * FROM journeys;
+SELECT * FROM spaceships;
+
+SELECT s.`name` AS 'spaceship_name', sp.`name` AS 'spaceport_name' FROM spaceships AS s
+JOIN journeys AS j ON j.spaceship_id = s.id
+JOIN spaceports AS sp ON sp.id = j.destination_spaceport_id
+ORDER BY s.light_speed_rate DESC
+LIMIT 1;
+
+#10
+SELECT * FROM spaceships;
+SELECT * FROM colonists;
+
+SELECT s.`name`, s.manufacturer FROM spaceships AS s
+JOIN journeys AS j ON j.spaceship_id = s.id
+JOIN travel_cards AS tc ON tc.journey_id = j.id
+JOIN colonists AS c ON c.id = tc.colonist_id
+WHERE c.birth_date > '1989-01-01'
+AND tc.job_during_journey = 'Pilot'
+ORDER BY s.`name`;
+
+SELECT s.`name`, s.manufacturer FROM spaceships AS s
+JOIN journeys AS j ON j.spaceship_id = s.id
+JOIN travel_cards AS tc ON tc.journey_id = j.id
+JOIN colonists AS c ON c.id = tc.colonist_id
+WHERE YEAR(c.birth_date) > YEAR(DATE_SUB('2019-01-01', INTERVAL 30 YEAR))
+AND tc.job_during_journey = 'Pilot'
+ORDER BY s.`name`;
+
+#11
+SELECT p.`name` AS 'planet_name', s.`name` AS 'spaceport_name' FROM planets AS p 
+JOIN spaceports AS s ON s.planet_id = p.id
+JOIN journeys AS j ON j.destination_spaceport_id = s.id
+WHERE j.purpose = 'Educational'
+ORDER BY s.`name` DESC;
+
+#12
+SELECT * FROM spaceports;
+SELECT * FROM journeys;
+
+SELECT p.`name` AS 'planet_name', COUNT(s.id) AS 'journeys_count' FROM planets AS p 
+JOIN spaceports AS s ON s.planet_id = p.id
+JOIN journeys AS j ON j.destination_spaceport_id = s.id
+GROUP BY s.planet_id
+ORDER BY journeys_count DESC, planet_name;
+
+#13
+SELECT j.id, p.`name` AS 'planet_name', s.`name` AS 'spaceport_name', j.purpose AS 'journey_purpose'
+-- DATEDIFF(j.journey_end, j.journey_start)
+FROM planets AS p 
+JOIN spaceports AS s ON s.planet_id = p.id
+JOIN journeys AS j ON j.destination_spaceport_id = s.id
+ORDER BY DATEDIFF(j.journey_end, j.journey_start)
+LIMIT 1;
+
+#14
+SELECT * FROM travel_cards;
+SELECT * FROM colonists;
+SELECT * FROM journeys;
+
+SELECT j.id FROM journeys AS j
+ORDER BY DATEDIFF(j.journey_end, j.journey_start) DESC;
+
+SELECT tc.job_during_journey AS 'job_name' FROM travel_cards AS tc
+WHERE tc.journey_id =
+(SELECT j.id FROM journeys AS j
+ORDER BY DATEDIFF(j.journey_end, j.journey_start) DESC
+LIMIT 1)
+GROUP BY tc.job_during_journey
+ORDER BY COUNT(tc.colonist_id)
+LIMIT 1;
+
+-- Section 4:
+#15
 
 

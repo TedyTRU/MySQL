@@ -215,4 +215,65 @@ LIMIT 1;
 -- Section 4:
 #15
 
+SELECT COUNT(tc.colonist_id)
+FROM planets AS p 
+JOIN spaceports AS s ON s.planet_id = p.id
+JOIN journeys AS j ON j.destination_spaceport_id = s.id
+JOIN travel_cards AS tc ON tc.journey_id = j.id
+JOIN colonists AS c ON tc.colonist_id = c.id
+WHERE p.`name` = 'Otroyphus'
+;
+
+DELIMITER $$
+CREATE FUNCTION udf_count_colonists_by_destination_planet (planet_name VARCHAR (30))
+RETURNS INT
+DETERMINISTIC
+BEGIN
+
+RETURN 
+(SELECT COUNT(tc.colonist_id)
+FROM planets AS p 
+JOIN spaceports AS s ON s.planet_id = p.id
+JOIN journeys AS j ON j.destination_spaceport_id = s.id
+JOIN travel_cards AS tc ON tc.journey_id = j.id
+JOIN colonists AS c ON tc.colonist_id = c.id
+WHERE p.`name` = planet_name
+);
+
+END $$
+
+DELIMITER ;
+SELECT p.name, udf_count_colonists_by_destination_planet('Otroyphus') AS count
+FROM planets AS p
+WHERE p.name = 'Otroyphus';
+
+#16
+SELECT * FROM spaceships;
+SELECT COUNT(*) FROM spaceships
+WHERE `name` = 'Judgment';
+
+DELIMITER $$
+CREATE PROCEDURE udp_modify_spaceship_light_speed_rate(spaceship_name VARCHAR(50), light_speed_rate_increse INT(11)) 
+BEGIN
+
+IF (SELECT COUNT(*) FROM spaceships WHERE `name` = spaceship_name) > 0 THEN
+	UPDATE spaceships AS s
+	SET s.light_speed_rate = s.light_speed_rate + light_speed_rate_increse
+	WHERE s.`name` = spaceship_name;
+ELSE 
+	SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Spaceship you are trying to modify does not exists.';
+    ROLLBACK;
+END IF
+;
+
+END $$
+
+DELIMITER ;
+
+CALL udp_modify_spaceship_light_speed_rate ('Na Pesho koraba', 1914);
+SELECT name, light_speed_rate FROM spacheships WHERE name = 'Na Pesho koraba';
+
+CALL udp_modify_spaceship_light_speed_rate ('USS Templar', 5);
+SELECT name, light_speed_rate FROM spaceships WHERE name = 'USS Templar';
 

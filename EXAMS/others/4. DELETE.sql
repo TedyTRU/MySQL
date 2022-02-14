@@ -29,5 +29,7 @@ WHERE (SELECT COUNT(*) FROM employees_clients WHERE e.id = employee_id) = 0;
 DELETE FROM colonists AS c
 WHERE (SELECT COUNT(*) FROM travel_cards WHERE colonist_id = c.id) = 0;
 
-
+#4
+DELETE FROM customers
+WHERE id NOT IN (SELECT customer_id FROM orders);
 

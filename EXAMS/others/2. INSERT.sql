@@ -47,11 +47,12 @@ SELECT
             
 FROM colonists WHERE id BETWEEN 96 AND 100;
 
+#2
+INSERT INTO reviews (content, picture_url, published_at, rating)
+SELECT LEFT(`description`, 15), REVERSE(`name`), CONVERT('2010-10-10', DATETIME), price / 8
+FROM products WHERE id >= 5;
 
-
-
-
-
-
-
-
+-- //
+INSERT INTO reviews (content, picture_url, published_at, rating)
+SELECT LEFT(`description`, 15), REVERSE(`name`), '2010-10-10' AS published_at, price / 8
+FROM products WHERE id >= 5;
